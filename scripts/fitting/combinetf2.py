@@ -111,14 +111,6 @@ if args.saveHists:
 
         del cov_prefit_variations
 
-dofit = args.toys >= 0 and args.externalPostfit is None
-
-if dofit:
-    fitter.minimize()
-
-val, grad, hess = fitter.loss_val_grad_hess()
-
-cov = tf.linalg.inv(hess)
 
 if args.externalPostfit is not None:
     # load results from external fit and set postfit value and covariance elements for common parameters
@@ -165,8 +157,15 @@ if args.externalPostfit is not None:
             covval[iparm, jparm] = cov_ext[iparm_ext, jparm_ext]
 
     fitter.x.assign(xvals)
-    cov = tf.convert_to_tensor(covval)
+    cov = tf.convert_to_tensor(covval)    
+else:
+    dofit = args.toys >= 0
 
+    if dofit:
+        fitter.minimize()
+
+    val, grad, hess = fitter.loss_val_grad_hess()
+    cov = tf.linalg.inv(hess)
 
 postfit_profile = args.externalPostfit is None
 
