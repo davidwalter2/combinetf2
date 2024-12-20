@@ -2,11 +2,10 @@ import numpy as np
 import hist
 import h5py
 import tensorflow as tf
-import narf.combineutils
 import argparse
 import narf.ioutils
 
-import pdb
+from combinetf2 import fitinputdata, workspace, fitter
 
 
 parser =  argparse.ArgumentParser()
@@ -35,9 +34,9 @@ parser.add_argument("--globalImpacts", default = False, action='store_true', hel
 
 args = parser.parse_args()
 
-indata = narf.combineutils.FitInputData(args.filename, args.pseudoData)
-workspace = narf.combineutils.Workspace(args.outputFormat)
-fitter = narf.combineutils.Fitter(indata, args, workspace)
+indata = fitinputdata.FitInputData(args.filename, args.pseudoData)
+ws = workspace.Workspace(args.outputFormat)
+fitter = fitter.Fitter(indata, ws, args)
 
 if args.toys == -1:
     fitter.nobs.assign(fitter.expected_events(profile=False))
