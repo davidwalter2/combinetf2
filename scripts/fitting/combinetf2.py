@@ -66,7 +66,7 @@ if args.saveHists:
         projection.update({"hist_data_obs" : hist_data_obs,
                     "hist_nobs" : hist_nobs,})
 
-    print(f"Save - inclusive")
+    print(f"Save - inclusive hist")
 
     hist_prefit_inclusive, aux_info = fitter.expected_hists(
         cov_prefit, 
@@ -79,7 +79,7 @@ if args.saveHists:
         label = "prefit expected number of events for all processes combined",
         )
 
-    print(f"Save - processes")
+    print(f"Save - processes hist")
 
     hist_prefit = fitter.expected_hists(
         cov_prefit, 
@@ -247,7 +247,7 @@ if args.doImpacts:
 if args.saveHists:
     print("Save postfit hists")
 
-    print(f"Save - inclusive")
+    print(f"Save - inclusive hist")
 
     hist_postfit_inclusive, aux_info = fitter.expected_hists(
         cov, 
@@ -262,7 +262,7 @@ if args.saveHists:
         label = "postfit expected number of events for all processes combined",
         )
 
-    print(f"Save - processes")
+    print(f"Save - processes hist")
 
     hist_postfit = fitter.expected_hists(
         cov, 
@@ -406,6 +406,5 @@ meta = {
     "signals": fitter.indata.signals,
     "procs": fitter.indata.procs,
 }
-
 
 fitter.workspace.write(args.output, results, meta)
