@@ -14,6 +14,7 @@ parser.add_argument("filename", help="filename of the main hdf5 input")
 parser.add_argument("-o","--output", default="fitresults",  help="output file name")
 parser.add_argument("--outputFormat", default="narf", choices=["narf", "h5py"],  help="output file name")
 parser.add_argument("-t","--toys", default=-1, type=int, help="run a given number of toys, 0 fits the data, and -1 fits the asimov toy (the default)")
+# parser.add_argument("-n","--nThreads", default=-1, type=int, help="Specify the number of threads when running on CPU")
 parser.add_argument("--expectSignal", default=1., type=float, help="rate multiplier for signal expectation (used for fit starting values and for toys)")
 parser.add_argument("--POIMode", default="mu", help="mode for POI's")
 parser.add_argument("--allowNegativePOI", default=False, action='store_true', help="allow signal strengths to be negative (otherwise constrained to be non-negative)")
@@ -33,6 +34,9 @@ parser.add_argument("--doImpacts", default=False, action='store_true', help="Com
 parser.add_argument("--globalImpacts", default = False, action='store_true', help="compute impacts in terms of variations of global observables (as opposed to nuisance parameters directly)")
 
 args = parser.parse_args()
+
+# print("Inter-op parallelism:", tf.config.threading.get_inter_op_parallelism_threads()) # Number of thread pools
+# print("Intra-op parallelism:", tf.config.threading.get_intra_op_parallelism_threads()) # Threads per pool
 
 indata = fitinputdata.FitInputData(args.filename, args.pseudoData)
 ws = workspace.Workspace(args.outputFormat)
