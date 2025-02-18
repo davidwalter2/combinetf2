@@ -259,7 +259,6 @@ class TensorWriter:
                 )
             logkup_proc = None
             logkdown_proc = None
-
         elif mirror:
             self._check_hist_and_channel(h, channel, add=False)
             syst = self.get_flat_values(h)
@@ -364,7 +363,7 @@ class TensorWriter:
                 f"Processes '{self.signals.intersection(self.bkgs)}' found as signal and background"
             )
 
-        procs = list(self.signals) + list(self.bkgs)
+        procs = sorted(list(self.signals)) + sorted(list(self.bkgs))
         nproc = len(procs)
 
         nbins = sum([v for v in self.nbinschan.values()])
@@ -675,7 +674,7 @@ class TensorWriter:
             ds[...] = content
 
         create_dataset("procs", procs)
-        create_dataset("signals", [s for s in self.signals])
+        create_dataset("signals", sorted(list(self.signals)))
         create_dataset("systs", systs)
         create_dataset("systsnoprofile", systsnoprofile)
         create_dataset("systsnoconstraint", systsnoconstraint)

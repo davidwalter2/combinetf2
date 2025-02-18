@@ -148,6 +148,8 @@ def plot_matrix(
         cbar=True,
         linewidths=0.5,
         ax=ax,
+        vmin=-1 if args.correlation else None,
+        vmax=1 if args.correlation else None,
     )
 
     xlabel = plot_tools.get_axis_label(config, axes, args.xlabel, is_bin=True)

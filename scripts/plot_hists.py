@@ -72,7 +72,7 @@ def parseArgs():
     )
     parser.add_argument(
         "--subtitle",
-        default=None,
+        default="",
         type=str,
         help="Subtitle to be printed after title",
     )
@@ -379,6 +379,15 @@ def make_plot(
             axes = axes[::-1]
 
         # make unrolled 1D histograms
+        if binwnorm is not None:
+            # need hist with variances to handle bin width normaliztion
+            h_data_tmp = hist.Hist(
+                *[a for a in h_data.axes], storage=hist.storage.Weight
+            )
+            h_data_tmp.values()[...] = h_data.values()
+            h_data_tmp.variances()[...] = h_data.values()
+            h_data = h_data_tmp
+
         h_data = hh.unrolledHist(h_data, binwnorm=binwnorm, obs=axes_names)
         h_inclusive = hh.unrolledHist(h_inclusive, binwnorm=binwnorm, obs=axes_names)
         h_stack = [

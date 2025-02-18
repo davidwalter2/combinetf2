@@ -178,7 +178,7 @@ class FitInputData:
 
             self.normalize = normalize
             if self.normalize:
-                # normalize predictoin and each systematic to total event yield in data
+                # normalize prediction and each systematic to total event yield in data
                 # FIXME this should be done per-channel ideally
 
                 data_sum = tf.reduce_sum(self.data_obs)

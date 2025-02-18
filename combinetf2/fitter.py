@@ -582,10 +582,8 @@ class Fitter:
 
         if self.allowNegativePOI:
             poi = xpoi
-            gradr = tf.ones_like(poi)
         else:
             poi = tf.square(xpoi)
-            gradr = 2.0 * xpoi
 
         rnorm = tf.concat(
             [poi, tf.ones([self.indata.nproc - poi.shape[0]], dtype=self.indata.dtype)],
@@ -637,6 +635,7 @@ class Fitter:
                     self.indata.logk,
                     [self.indata.nbins * self.indata.nproc, 2 * self.indata.nsyst],
                 )
+
             logsnorm = tf.matmul(mlogk, mthetaalpha)
             logsnorm = tf.reshape(logsnorm, [self.indata.nbins, self.indata.nproc])
 
@@ -680,7 +679,7 @@ class Fitter:
                 beta = self.beta0
             nexpfull = beta * nexpfullcentral
             if compute_normfull:
-                normfull *= beta[..., None]
+                normfull = beta[..., None] * normfullcentral
 
             if self.normalize:
                 # FIXME this is probably not fully consistent when combined with the binByBinStat
@@ -742,8 +741,9 @@ class Fitter:
         ):
             raise NotImplementedError()
 
-        aux = []
+        aux = [None] * 4
         if compute_cov or compute_variance or compute_global_impacts:
+            # exp, var = self.expected_with_variance(fun, cov, profile=profile)
             exp, expvar, expcov, exp_impacts, exp_impacts_grouped = (
                 self.expected_with_variance(
                     fun,
@@ -856,7 +856,7 @@ class Fitter:
         ):
             raise NotImplementedError()
 
-        aux = []
+        aux = [None] * 4
         if compute_variance or compute_cov or compute_global_impacts:
             exp, expvar, expcov, exp_impacts, exp_impacts_grouped = (
                 self.expected_with_variance(
