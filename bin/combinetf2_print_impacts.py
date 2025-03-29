@@ -134,22 +134,10 @@ def main():
                 "Only global impacts on observables is implemented (use --globalImpacts)"
             )
 
-        identifier = args.physicsModel[0]
-        channel = args.physicsModel[1]
-        model_axes = args.physicsModel[2:]
-        channel_hists = fitresult["channels"][channel]
-
-        if len(model_axes) > 0:
-            model_hists = channel_hists[identifier]
-            key = "_".join(model_axes)
-            if key not in model_hists.keys():
-                available = [k.split("_") for k in model_hists.keys()]
-                raise ValueError(
-                    f"Histogram with axes {model_axes} not found! Available histograms: {available}"
-                )
-            hists = model_hists[key]
-        else:
-            hists = channel_hists
+        model = args.physicsModel[0]
+        instance = args.physicsModel[1]
+        channel = args.physicsModel[2]
+        hists = fitresult[model][instance]["channels"][channel]
 
         key = "hist_postfit_inclusive_global_impacts"
         if not args.ungroup:

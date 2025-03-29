@@ -100,20 +100,23 @@ class Workspace:
             file_path = f"{parts[0]}_{postfix}.{parts[1]}"
         return file_path
 
-    def dump_obj(self, obj, key, channel=None, identifiers=[]):
-        if channel is not None:
-            if "channels" not in self.results.keys():
-                self.results["channels"] = {}
-            if channel not in self.results["channels"].keys():
-                self.results["channels"][channel] = {}
-            result = self.results["channels"][channel]
-        else:
-            result = self.results
-
-        for idf in identifiers:
+    def dump_obj(
+        self, obj, key, model_name=None, model_instance_name=None, channel=None
+    ):
+        result = self.results
+        for idf in [model_name, model_instance_name]:
+            if idf is None:
+                continue
             if idf not in result.keys():
                 result[idf] = {}
             result = result[idf]
+
+        if channel is not None:
+            if "channels" not in result.keys():
+                result["channels"] = {}
+            if channel not in result["channels"]:
+                result["channels"][channel] = {}
+            result = result["channels"][channel]
 
         result[key] = obj
 
@@ -142,7 +145,8 @@ class Workspace:
         stop=None,
         label=None,
         channel=None,
-        identifiers=[],
+        model_name=None,
+        model_instance_name=None,
     ):
         if not isinstance(axes, (list, tuple, np.ndarray)):
             axes = [axes]
@@ -151,22 +155,15 @@ class Workspace:
             if variances is not None:
                 variances = variances[start:stop]
         h = self.hist(name, axes, values, variances, label)
-        self.dump_hist(h, channel, identifiers)
+        self.dump_hist(h, model_name, model_instance_name, channel)
 
     def add_value(self, value, name, *args, **kwargs):
         self.dump_obj(value, name, *args, **kwargs)
 
     def add_chi2(self, chi2, ndf, prefit, model):
         postfix = "_prefit" if prefit else ""
-        if model.name == "basemodel":
-            self.add_value(ndf, "ndf" + postfix)
-            self.add_value(chi2, "chi2" + postfix)
-            return
-
-        for channel, info in model.channel_info.items():
-            axes = info["axes"]
-            self.add_value(ndf, "ndf" + postfix, channel, model.identifiers)
-            self.add_value(chi2, "chi2" + postfix, channel, model.identifiers)
+        self.add_value(ndf, "ndf" + postfix, model.name, model.instance)
+        self.add_value(chi2, "chi2" + postfix, model.name, model.instance)
 
     def add_observed_hists(
         self, model, data_obs, nobs, data_cov_inv=None, nobs_cov_inv=None
@@ -197,8 +194,9 @@ class Workspace:
             opts = dict(
                 start=start,
                 stop=stop,
+                model_name=model.name,
+                model_instance_name=model.instance,
                 channel=channel,
-                identifiers=model.identifiers,
             )
 
             self.add_hist(
@@ -359,8 +357,9 @@ class Workspace:
                 start=info["start"],
                 stop=info["stop"],
                 label=label,
+                model_name=model.name,
+                model_instance_name=model.instance,
                 channel=channel,
-                identifiers=model.identifiers,
             )
 
             hist_axes = axes.copy()
@@ -416,7 +415,8 @@ class Workspace:
                 [flat_axis_x, flat_axis_y],
                 cov,
                 label=f"{label} covariance",
-                identifiers=model.identifiers,
+                model_name=model.name,
+                model_instance_name=model.instance,
             )
 
         return name, label

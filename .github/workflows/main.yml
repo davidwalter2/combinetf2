@@ -170,6 +170,7 @@ jobs:
           -m project ch1 a -m project ch1 b -m project ch0_masked 
           -m normalize ch0 x
           -m ratio ch0 ch0 sig sig,bkg
+          -m ratio ch0 ch1 'None:None' 'b:slice(0,2)'
           -m ratio ch0 ch1 'x:slice(None,None,2)' 'a:slice(None),b:slice(None)'
           -m normratio ch1 ch1 sig sig,bkg 'b:slice(None)' 'b:2'
 
@@ -221,7 +222,7 @@ jobs:
         run: combinetf2_print_impacts.py $COMBINETF2_OUTDIR/fitresults.hdf5 -s --globalImpacts
 
       - name: print global impacts of observable
-        run: combinetf2_print_impacts.py $COMBINETF2_OUTDIR/fitresults.hdf5 --globalImpacts -m project ch0_masked yield --ungroup --sort
+        run: combinetf2_print_impacts.py $COMBINETF2_OUTDIR/fitresults.hdf5 --globalImpacts -m project ch0_masked ch0_masked --ungroup --sort
 
       - name: plot impacts
         run: >-
@@ -268,6 +269,17 @@ jobs:
         run: >-
           combinetf2_plot_hists_uncertainties.py $COMBINETF2_OUTDIR/fitresults.hdf5 -o $WEB_DIR/$PLOT_DIR  
           -m ratio ch0 x --subtitle Preliminary --config tests/style_config.py --ylabel 'sig/(sig+bkg)' --postfix signalfraction
+
+      - name: plot postfit ratio
+        run: >-
+          combinetf2_plot_hists.py $COMBINETF2_OUTDIR/fitresults.hdf5 -o $WEB_DIR/$PLOT_DIR  
+          -m ratio ch0_ch1 a0 --yscale 1.2 --subtitle Preliminary --config tests/style_config.py --ylabel 'ch0/ch1' --postfix ratio
+
+      - name: plot postfit ratio uncertainties
+        run: >-
+          combinetf2_plot_hists_uncertainties.py $COMBINETF2_OUTDIR/fitresults.hdf5 -o $WEB_DIR/$PLOT_DIR  
+          -m ratio ch0_ch1 a0 --subtitle Preliminary --config tests/style_config.py --ylabel 'ch0/ch1' --postfix ratio
+
 
       - name: plot histogram covariance matrices
         run: >-

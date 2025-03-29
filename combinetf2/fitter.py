@@ -991,7 +991,7 @@ class Fitter:
             exp = tf.function(fun)()
 
         if compute_chi2:
-            data, data_err, data_cov = model.get_data(self.nobs, self.data_cov_inv)
+            data, data_var, data_cov = model.get_data(self.nobs, self.data_cov_inv)
 
             # need to calculate prediction excluding masked channels
             def flat_fun():

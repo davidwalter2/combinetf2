@@ -10,9 +10,8 @@ import time
 import h5py
 import numpy as np
 
-from combinetf2 import fitter, inputdata, io_tools
-from combinetf2 import physicsmodels as pm
-from combinetf2 import workspace
+from combinetf2 import fitter, inputdata, io_tools, workspace
+from combinetf2.physicsmodels import helpers as ph
 
 from wums import output_tools, logging  # isort: skip
 
@@ -534,11 +533,7 @@ def main():
     # physics models for observables and transformations
     models = []
     for margs in args.physicsModel:
-        if margs[0] not in pm.models.keys():
-            raise NotImplementedError(
-                f"Model {margs[0]} not found. Available models are {pm.models.keys()}"
-            )
-        model = pm.models[margs[0]](indata, *margs[1:])
+        model = ph.instance_from_module(margs[0], indata, *margs[1:])
         models.append(model)
 
     np.random.seed(args.seed)

@@ -171,7 +171,7 @@ def parseArgs():
         nargs="+",
         action="append",
         default=[],
-        help='Make plot of physics model prefit and postfit histograms, specifying the model name, followed by the channel name and axis names, e.g. "-m project ch0 eta pt". This argument can be called multiple times',
+        help='Make plot of physics model prefit and postfit histograms, specifying the model name, followed by the instance key and channel name, e.g. "-m project ch0_eta_pt ch0". This argument can be called multiple times',
     )
     parser.add_argument(
         "--flterUncertainties",
@@ -415,7 +415,6 @@ def make_plot(
 def make_plots(
     outdir,
     result,
-    axes,
     args=None,
     channel="",
     lumi=1,
@@ -428,6 +427,7 @@ def make_plots(
         hist_impacts = None
 
     hist_total = result["hist_postfit_inclusive"].get()
+    axes = [a for a in hist_total.axes]
 
     if hist_impacts is not None:
         uncertainties = np.array(hist_impacts.axes["impacts"], dtype=str)
@@ -585,27 +585,41 @@ def main():
     for margs in models:
         model = margs[0]
 
-        for channel, info in channel_info.items():
+        if model not in fitresult.keys():
+            raise ValueError(f"Model {model} not found in fitresult")
 
-            if model == "basemodel":
-                axes_names = [a.name for a in info["axes"]]
-                result = fitresult[f"channels"][channel]
-            else:
-                if channel != margs[1]:
+        if len(margs) > 1:
+            instance_key = margs[1]
+            if instance_key not in fitresult[model].keys():
+                raise ValueError(
+                    f"Instance {instance_key} of model {model} not found in fitresult"
+                )
+        else:
+            instance_key = None
+
+        for instance_name, instance in fitresult[model].items():
+            if instance_key is not None and instance_name != instance_key:
+                continue
+
+            if len(margs) > 2:
+                if margs[2] not in instance["channels"][model].keys():
+                    raise ValueError(
+                        f"Channel {margs[2]} of instance {instance_name} of model {model} not found in fitresult"
+                    )
+
+            for channel, result in instance["channels"].items():
+                if len(margs) > 2 and margs[2] != channel:
                     continue
-                axes_names = margs[2:]
-                if len(axes_names) == 0:
-                    axes_names = ["yield"]
-                result = fitresult["channels"][channel][model]["_".join(axes_names)]
 
-            make_plots(
-                outdir,
-                result,
-                axes=[a for a in info["axes"] if a.name in axes_names],
-                channel=channel,
-                lumi=info.get("lumi", None),
-                **opts,
-            )
+                info = channel_info.get(channel, {})
+
+                make_plots(
+                    outdir,
+                    result,
+                    channel=channel,
+                    lumi=info.get("lumi", None),
+                    **opts,
+                )
 
     if output_tools.is_eosuser_path(args.outpath) and args.eoscp:
         output_tools.copy_to_eos(outdir, args.outpath, args.outfolder)

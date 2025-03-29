@@ -189,6 +189,13 @@ def parseArgs():
     parser.add_argument(
         "--logTransform", action="store_true", help="Log transform the events"
     )
+    parser.add_argument(
+        "--dataHist",
+        type=str,
+        default="nobs",
+        choices=["data_obs", "nobs"],
+        help="Which data to plot ('data_obs': data histogram provided in input data; 'nobs': Plot (pseudo) data used in the fit)",
+    )
     parser.add_argument("--noData", action="store_true", help="Don't plot the data")
     parser.add_argument(
         "--noUncertainty", action="store_true", help="Don't plot total uncertainty band"
@@ -205,7 +212,7 @@ def parseArgs():
         nargs="+",
         action="append",
         default=[],
-        help='Make plot of physics model prefit and postfit histograms, specifying the model name, followed by the channel name and axis names, e.g. "-m project ch0 eta pt". This argument can be called multiple times',
+        help='Make plot of physics model prefit and postfit histograms, specifying the model name, followed by the instance key and channel name, e.g. "-m project ch0_eta_pt ch0". This argument can be called multiple times',
     )
     parser.add_argument(
         "--filterProcs",
@@ -861,7 +868,6 @@ def make_plot(
 
 def make_plots(
     result,
-    axes,
     outdir,
     procs=None,
     labels=None,
@@ -887,8 +893,8 @@ def make_plots(
         hist_inclusive = result[f"hist_prefit_inclusive"].get()
         hist_stack = []
     else:
-        if "hist_data_obs" in result.keys():
-            hist_data = result["hist_data_obs"].get()
+        if f"hist_{args.dataHist}" in result.keys():
+            hist_data = result[f"hist_{args.dataHist}"].get()
         else:
             hist_data = None
 
@@ -898,6 +904,8 @@ def make_plots(
             hist_stack = [hist_stack[{"processes": p}] for p in procs]
         else:
             hist_stack = []
+
+    axes = [a for a in hist_inclusive.axes]
 
     # vary poi by postfit uncertainty
     if varNames is not None:
@@ -1143,35 +1151,48 @@ def main():
     for margs in models:
         model = margs[0]
 
-        for channel, info in channel_info.items():
+        if model not in fitresult.keys():
+            raise ValueError(f"Model {model} not found in fitresult")
 
-            if model == "basemodel":
-                axes_names = [a.name for a in info["axes"]]
-                result = fitresult[f"channels"][channel]
-                is_normalized = False
-                chi2, ndf, saturated_chi2 = get_chi2(fitresult, args.noChisq, fittype)
-            else:
-                if channel != margs[1]:
+        is_normalized = model in ["normalized", "normratio"]
+
+        if len(margs) > 1:
+            instance_key = margs[1]
+            if instance_key not in fitresult[model].keys():
+                raise ValueError(
+                    f"Instance {instance_key} of model {model} not found in fitresult"
+                )
+        else:
+            instance_key = None
+
+        for instance_name, instance in fitresult[model].items():
+            if instance_key is not None and instance_name != instance_key:
+                continue
+
+            chi2, ndf, saturated_chi2 = get_chi2(instance, args.noChisq, fittype)
+
+            if len(margs) > 2:
+                if margs[2] not in instance["channels"][model].keys():
+                    raise ValueError(
+                        f"Channel {margs[2]} of instance {instance_name} of model {model} not found in fitresult"
+                    )
+
+            for channel, result in instance["channels"].items():
+                if len(margs) > 2 and margs[2] != channel:
                     continue
-                axes_names = margs[2:]
-                if len(axes_names) == 0:
-                    axes_names = ["yield"]
-                result = fitresult["channels"][channel][model]["_".join(axes_names)]
-                is_normalized = model in ["normalized", "normratio"]
-                chi2, ndf, saturated_chi2 = get_chi2(result, args.noChisq, fittype)
 
-            opts["saturated_chi2"] = saturated_chi2
+                info = channel_info.get(channel, {})
 
-            make_plots(
-                result,
-                [a for a in info["axes"] if a.name in axes_names],
-                outdir,
-                channel=channel,
-                chi2=[chi2, ndf],
-                lumi=info.get("lumi", None),
-                is_normalized=is_normalized,
-                **opts,
-            )
+                make_plots(
+                    result,
+                    outdir,
+                    channel=channel,
+                    chi2=[chi2, ndf],
+                    saturated_chi2=saturated_chi2,
+                    lumi=info.get("lumi", None),
+                    is_normalized=is_normalized,
+                    **opts,
+                )
 
     if output_tools.is_eosuser_path(args.outpath) and args.eoscp:
         output_tools.copy_to_eos(outdir, args.outpath, args.outfolder)
