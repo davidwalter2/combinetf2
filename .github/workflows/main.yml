@@ -239,7 +239,7 @@ jobs:
       - name: plot global impacts on observable
         run: >-
           combinetf2_plot_pulls_and_impacts.py $COMBINETF2_OUTDIR/fitresults.hdf5 -o $WEB_DIR/$PLOT_DIR
-          -s absimpact -m project ch0_masked yield
+          -s absimpact -m project ch0_masked ch0_masked
           --otherExtensions pdf png -n 50  --config tests/style_config.py --oneSidedImpacts --globalImpacts --showNumbers
           --grouping max --subtitle Preliminary --postfix ch0_masked
 
